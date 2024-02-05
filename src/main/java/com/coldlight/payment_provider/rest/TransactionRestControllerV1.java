@@ -5,6 +5,7 @@ import com.coldlight.payment_provider.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -13,7 +14,8 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/")
-public class TransactionController {
+@Transactional
+public class TransactionRestControllerV1 {
     private final TransactionService transactionService;
 
     @PostMapping("/top-up")
@@ -41,7 +43,7 @@ public class TransactionController {
                 });
     }
 
-    @GetMapping("/payments/transaction/list")
+    @GetMapping("/payments/transaction/list-by-date")
     public Mono<ResponseEntity<List<Transaction>>> getTransactionsByDateRange(
             @RequestParam("start_date") long startDate,
             @RequestParam("end_date") long endDate) {
@@ -71,14 +73,14 @@ public class TransactionController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    /*@GetMapping("/payments/payout/list")
-    public Mono<ResponseEntity<List<Transaction>>> getTransactionsByDateRange(
+    @GetMapping("/payments/payout/list-by-date")
+    public Mono<ResponseEntity<List<Transaction>>> getPayoutByDateRange(
             @RequestParam("start_date") long startDate,
             @RequestParam("end_date") long endDate) {
         return transactionService.getTransactionsByDateRange(startDate, endDate)
                 .collectList()
                 .map(ResponseEntity::ok);
-    }*/
+    }
 
 
     private void checkAuthorization(String authorizationHeader) {

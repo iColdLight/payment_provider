@@ -2,6 +2,7 @@ package com.coldlight.payment_provider.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +24,9 @@ public class Merchant extends BaseEntity{
     @Column(name = "contact")
     private String contact;
 
-    @Column(name = "balance")
-    private Long balance;
+    @Column(name = "wallet_id")
+    private Long walletId;
+
+    @Transient
+    private Wallet wallet;
 }

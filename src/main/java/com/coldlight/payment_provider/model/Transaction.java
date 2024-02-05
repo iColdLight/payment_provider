@@ -1,6 +1,6 @@
 package com.coldlight.payment_provider.model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -11,7 +11,6 @@ import java.util.Date;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 @RequiredArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
@@ -21,6 +20,14 @@ public class Transaction extends BaseEntity{
     @Column(name = "payment_method")
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
+
+    @Column(name = "transaction_type")
+    @Enumerated(EnumType.STRING)
+    private TransactionType transactionType;
+
+    @Column(name = "transaction_status")
+    @Enumerated(EnumType.STRING)
+    private TransactionStatus transactionStatus;
 
     @Column(name = "amount")
     private Long amount;
@@ -40,16 +47,34 @@ public class Transaction extends BaseEntity{
     @Column(name = "updated_at")
     private Date updatedAt;
 
-    @Transient
-    private CardData cadData;
+    @Column(name = "card_id")
+    private Long cardId;
 
     @Column(name = "transaction_language")
     @Enumerated(EnumType.STRING)
     private Language language;
 
-    @Transient
-    private Merchant merchantId;
+    @Column(name = "merchant_id")
+    private Long merchantId;
+
+    @Column(name = "customer_id")
+    private Long customerId;
+
+    @Column(name = "wallet_id")
+    private Long walletId;
+
+    @Column(name = "notification_url")
+    private String notificationUrl;
 
     @Transient
-    private Customer customerId;
+    private CardData cardData;
+
+    @Transient
+    private Merchant merchant;
+
+    @Transient
+    private Customer customer;
+
+    @Transient
+    private Wallet wallet;
 }

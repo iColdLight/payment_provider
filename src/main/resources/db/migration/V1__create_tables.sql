@@ -10,11 +10,14 @@ create table if not exists paymentprovider.merchant (
     id BIGINT NOT NULL PRIMARY KEY,
     merchant_name VARCHAR(255),
     contact VARCHAR(255),
-    balance BIGINT
+    wallet_id BIGINT NOT NULL,
+    FOREIGN KEY (wallet_id) REFERENCES paymentprovider.wallet(id)
 );
 create table if not exists paymentprovider.transaction (
     id BIGINT NOT NULL PRIMARY KEY,
     payment_method VARCHAR(255),
+    transaction_type VARCHAR(255),
+    transaction_status VARCHAR(255),
     amount BIGINT,
     currency VARCHAR(255),
     external_transaction_id BIGINT NOT NULL,
@@ -24,9 +27,12 @@ create table if not exists paymentprovider.transaction (
     transaction_language VARCHAR(255),
     merchant_id BIGINT NOT NULL,
     customer_id BIGINT NOT NULL,
+    wallet_id BIGINT NOT NULL,
+    notification_url VARCHAR(255),
     FOREIGN KEY (card_id) REFERENCES paymentprovider.card_data (id),
     FOREIGN KEY (merchant_id) REFERENCES paymentprovider.merchant (id),
-    FOREIGN KEY (customer_id) REFERENCES paymentprovider.customer (id)
+    FOREIGN KEY (customer_id) REFERENCES paymentprovider.customer (id),
+    FOREIGN KEY (wallet_id) REFERENCES paymentprovider.wallet(id)
 );
 create table if not exists paymentprovider.card_data (
     id BIGINT NOT NULL PRIMARY KEY,
@@ -35,8 +41,15 @@ create table if not exists paymentprovider.card_data (
     cvv SMALLINT
 );
 create table if not exists paymentprovider.webhook (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL PRIMARY KEY,
     webhook_event_type VARCHAR(255),
     url VARCHAR(255)
-)
+);
+create table if not exists paymentprovider.wallet (
+    id BIGINT NOT NULL PRIMARY KEY,
+    merchant_id BIGINT NOT NULL,
+    balance BIGINT,
+    currency VARCHAR(255),
+    FOREIGN KEY (merchant_id) REFERENCES paymentprovider.merchant (id)
+);
 
