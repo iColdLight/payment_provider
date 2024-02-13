@@ -1,4 +1,4 @@
-package com.coldlight.payment_provider.service;
+package com.coldlight.payment_provider.service.impl;
 
 import com.coldlight.payment_provider.model.Transaction;
 import com.coldlight.payment_provider.model.TransactionStatus;
@@ -36,18 +36,16 @@ public class TransactionProcessor {
     }
 
     @Scheduled(fixedDelay = 10000)
-    public void processTransactions() {
-        Flux<Transaction> transactions = getAllTransactions();
-        transactions
+    public Flux<Void> processTransactions() {
+        return getAllTransactions()
                 .flatMap(transaction -> {
                     boolean isSuccess = Math.random() < 0.8;
                     transaction.setTransactionStatus(isSuccess ? TransactionStatus.SUCCESS : TransactionStatus.FAILURE);
                     Mono<Void> sendWebhook = sendWebhook(transaction);
                     Mono<Void> saveWebhook = saveWebhook(transaction);
                     Mono<Void> retryLogic = retryLogic(transaction, 3);
-                    return Mono.when(sendWebhook, saveWebhook, retryLogic);
-                })
-                .subscribe();
+                    return Mono.when(sendWebhook, saveWebhook, retryLogic).then();
+                });
     }
 
     private Flux<Transaction> getAllTransactions() {

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -21,13 +22,11 @@ public class TransactionRestControllerV1 {
     @PostMapping("/top-up")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<Transaction> createTransaction(@RequestBody Transaction request,
-                                               @RequestHeader("Authorization") String authorizationHeader) {
-        // Проверяем авторизацию
+                                               @RequestHeader("Authorization") String authorizationHeader) throws IOException {
+
         checkAuthorization(authorizationHeader);
 
-        // Вызываем сервисный метод для создания транзакции
-        return transactionService.deposit(request)
-                .map(transaction -> new Transaction());
+        return transactionService.deposit(request);
     }
 
     @GetMapping("/payments/transaction/list")
@@ -52,7 +51,7 @@ public class TransactionRestControllerV1 {
                 .map(ResponseEntity::ok);
     }
 
-    @GetMapping("/{TransactionId}/details")
+    @GetMapping("/transaction/{TransactionId}/details")
     public Mono<ResponseEntity<Transaction>> getTransactionDetails(@PathVariable("TransactionId") Long id) {
         return transactionService.getTransactionDetailsById(id)
                 .map(ResponseEntity::ok)
@@ -83,9 +82,9 @@ public class TransactionRestControllerV1 {
     }
 
 
-    private void checkAuthorization(String authorizationHeader) {
-        // Проверка авторизации
-        // Реализуйте код для проверки авторизации, используя заголовок Authorization
-        // и расшифровку Base64-кодирования для извлечения учетных данных
+    private void checkAuthorization(String authorizationHeader) throws IOException {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new IOException("Invalid authorization header");
+        }
     }
 }

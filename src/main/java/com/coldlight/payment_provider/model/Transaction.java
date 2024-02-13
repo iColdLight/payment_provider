@@ -7,6 +7,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -41,11 +42,11 @@ public class Transaction extends BaseEntity{
 
     @CreatedDate
     @Column(name = "created_at")
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
     @Column(name = "card_id")
     private Long cardId;

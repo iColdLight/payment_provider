@@ -4,6 +4,7 @@ create table if not exists paymentprovider.customer (
     id BIGINT NOT NULL PRIMARY KEY,
     first_name VARCHAR(255),
     last_name VARCHAR(255),
+    balance BIGINT,
     email VARCHAR(255)
 );
 create table if not exists paymentprovider.merchant (
