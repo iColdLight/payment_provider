@@ -1,15 +1,13 @@
 package com.coldlight.payment_provider.model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.*;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
 @Table(name = "wallet")
 public class Wallet extends BaseEntity{
 

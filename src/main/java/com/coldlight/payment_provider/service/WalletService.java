@@ -7,4 +7,5 @@ public interface WalletService {
 
     Mono<Wallet> getWalletById(Long id);
     Mono<Long> getAccountBalance(Long id);
+    Mono<Wallet> getWalletByIdForUpdate(Long walletId);
 }

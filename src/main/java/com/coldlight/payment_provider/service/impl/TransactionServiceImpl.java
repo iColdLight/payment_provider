@@ -6,32 +6,27 @@ import com.coldlight.payment_provider.repository.TransactionRepository;
 import com.coldlight.payment_provider.service.CustomerService;
 import com.coldlight.payment_provider.service.TransactionService;
 import com.coldlight.payment_provider.service.WalletService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
+@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final CustomerService customerService;
     private final WalletService walletService;
+    private final TransactionProcessor transactionProcessor;
 
-
-    @Autowired
-    public TransactionServiceImpl(TransactionRepository transactionRepository, CustomerService customerService, WalletService walletService) {
-        this.transactionRepository = transactionRepository;
-        this.customerService = customerService;
-        this.walletService = walletService;
-    }
 
     @Override
     public Mono<Transaction> deposit(Transaction request) {
         // Проверка валидности транзакции и обработка операций с клиентом и кошельком
         return customerService.getCustomerById(request.getCustomerId())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Customer not found")))
-                .flatMap(customer -> walletService.getWalletById(request.getWalletId())
+                .flatMap(customer -> walletService.getWalletByIdForUpdate(request.getWalletId())
                         .switchIfEmpty(Mono.error(new IllegalArgumentException("Wallet not found")))
                         .flatMap(wallet -> {
                             if (customer.getBalance() < request.getAmount()) {
@@ -52,15 +47,13 @@ public class TransactionServiceImpl implements TransactionService {
                                 transaction.setUpdatedAt(request.getUpdatedAt());
                                 transaction.setCardId(request.getCardId());
                                 transaction.setLanguage(request.getLanguage());
-                                transaction.setMerchantId(request.getMerchantId());
                                 transaction.setCustomerId(request.getCustomerId());
                                 transaction.setWalletId(request.getWalletId());
                                 transaction.setNotificationUrl(request.getNotificationUrl());
                                 transaction.setTransactionStatus(TransactionStatus.PENDING);
 
-                                transaction.setTransactionStatus(TransactionStatus.SUCCESS);
-
-                                return transactionRepository.save(transaction)
+                                return transactionProcessor.processTransactions()
+                                        .then(transactionRepository.save(transaction))
                                         .thenReturn(transaction);
                             }));
                         }));
@@ -70,7 +63,7 @@ public class TransactionServiceImpl implements TransactionService {
     public Mono<Transaction> withdraw(Transaction request) {
         return customerService.getCustomerById(request.getCustomerId())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Customer not found")))
-                .flatMap(customer -> walletService.getWalletById(request.getWalletId())
+                .flatMap(customer -> walletService.getWalletByIdForUpdate(request.getWalletId())
                         .switchIfEmpty(Mono.error(new IllegalArgumentException("Wallet not found")))
                         .flatMap(wallet -> {
                             if (customer == null || wallet == null) {
@@ -95,13 +88,13 @@ public class TransactionServiceImpl implements TransactionService {
                                         transaction.setUpdatedAt(request.getUpdatedAt());
                                         transaction.setCardId(request.getCardId());
                                         transaction.setLanguage(request.getLanguage());
-                                        transaction.setMerchantId(request.getMerchantId());
                                         transaction.setCustomerId(request.getCustomerId());
                                         transaction.setWalletId(request.getWalletId());
                                         transaction.setNotificationUrl(request.getNotificationUrl());
-                                        transaction.setTransactionStatus(TransactionStatus.SUCCESS);
+                                        transaction.setTransactionStatus(TransactionStatus.PENDING);
 
-                                        return transactionRepository.save(transaction)
+                                        return transactionProcessor.processTransactions()
+                                                .then(transactionRepository.save(transaction))
                                                 .thenReturn(transaction);
                                     });
                         }));

@@ -4,17 +4,14 @@ import javax.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
 @Table(name = "transaction")
 public class Transaction extends BaseEntity{
 
@@ -55,9 +52,6 @@ public class Transaction extends BaseEntity{
     @Enumerated(EnumType.STRING)
     private Language language;
 
-    @Column(name = "merchant_id")
-    private Long merchantId;
-
     @Column(name = "customer_id")
     private Long customerId;
 
@@ -69,9 +63,6 @@ public class Transaction extends BaseEntity{
 
     @Transient
     private CardData cardData;
-
-    @Transient
-    private Merchant merchant;
 
     @Transient
     private Customer customer;

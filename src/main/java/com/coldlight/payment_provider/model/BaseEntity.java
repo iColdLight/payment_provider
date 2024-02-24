@@ -1,8 +1,6 @@
 package com.coldlight.payment_provider.model;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import lombok.*;
 
 

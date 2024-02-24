@@ -4,7 +4,7 @@ import com.coldlight.payment_provider.model.Transaction;
 import com.coldlight.payment_provider.model.TransactionStatus;
 import com.coldlight.payment_provider.repository.TransactionRepository;
 import com.coldlight.payment_provider.repository.WebHookRepository;
-import org.springframework.scheduling.annotation.Scheduled;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,14 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 //TODO: add Scheduled job
 @Service
+@Slf4j
 @Transactional
 public class TransactionProcessor {
 
-    //Get all transactions
-    //Set status: 80% - success, 20% - fail
-    //Send webhook to notification_url
-    //Save all webhooks
-    //Add retry logic - 3 times in the worst case
     private final WebClient webClient; // WebClient для отправки HTTP-запросов
     private final TransactionRepository transactionRepository;
     private final WebHookRepository webHookRepository;
@@ -35,12 +31,12 @@ public class TransactionProcessor {
         this.webHookRepository = webHookRepository;
     }
 
-    @Scheduled(fixedDelay = 10000)
+
     public Flux<Void> processTransactions() {
         return getAllTransactions()
                 .flatMap(transaction -> {
                     boolean isSuccess = Math.random() < 0.8;
-                    transaction.setTransactionStatus(isSuccess ? TransactionStatus.SUCCESS : TransactionStatus.FAILURE);
+                    transaction.setTransactionStatus(isSuccess ? TransactionStatus.SUCCESS : TransactionStatus.PENDING);
                     Mono<Void> sendWebhook = sendWebhook(transaction);
                     Mono<Void> saveWebhook = saveWebhook(transaction);
                     Mono<Void> retryLogic = retryLogic(transaction, 3);
@@ -68,39 +64,28 @@ public class TransactionProcessor {
 
     private Mono<Void> retryLogic(Transaction transaction, int maxRetryAttempts) {
         AtomicInteger attempt = new AtomicInteger(0);
-        return Mono.defer(() -> {
-            return Mono.just(transaction)
-                    .flatMap(this::processTransaction)
-                    .onErrorResume(error -> {
-                        int currentAttempt = attempt.incrementAndGet();
-                        if (currentAttempt < maxRetryAttempts) {
-                            System.err.println("Произошла ошибка, повторная попытка через 1 секунду...");
-                            return Mono.delay(Duration.ofSeconds(1))
-                                    .then(retryLogic(transaction, maxRetryAttempts));
-                        } else {
-                            return Mono.error(new RuntimeException("Достигнуто максимальное количество попыток повтора.", error));
-                        }
-                    });
-        });
+        return Mono.defer(() -> Mono.just(transaction)
+                .flatMap(this::processTransaction)
+                .onErrorResume(error -> {
+                    int currentAttempt = attempt.incrementAndGet();
+                    if (currentAttempt < maxRetryAttempts) {
+                        log.error("Произошла ошибка, повторная попытка через 1 секунду...");
+                        return Mono.delay(Duration.ofSeconds(1))
+                                .then(retryLogic(transaction, maxRetryAttempts));
+                    } else {
+                        return Mono.error(new RuntimeException("Достигнуто максимальное количество попыток повтора.", error));
+                    }
+                }));
     }
 
     private Mono<Void> processTransaction(Transaction transaction) {
         return Mono.fromRunnable(() -> {
             try {
-                System.out.println("Processing transaction: " + transaction.getId());
-                System.out.println("Payment method: " + transaction.getPaymentMethod());
-
-                Thread.sleep(1000);
-
-                if (transaction.equals(null)) {
-                    throw new RuntimeException("Transaction is not found.");
-                }
-                System.out.println("Transaction processed successfully: " + transaction.getId());
-            } catch (InterruptedException e) {
-                System.err.println("Transaction processing was interrupted: " + transaction.getId());
-                Thread.currentThread().interrupt();
+                log.info("Processing transaction: " + transaction.getId());
+                log.info("Payment method: " + transaction.getPaymentMethod());
+                log.info("Transaction processed successfully: " + transaction.getId());
             } catch (Exception e) {
-                System.err.println("An error occurred while processing the transaction: " + transaction.getId());
+                log.error("An error occurred while processing the transaction: " + transaction.getId());
                 e.printStackTrace();
             }
         });
